@@ -7,9 +7,9 @@ on:
 
 jobs:
   build_windows:
-  runs-on: windows-latest
-  permissions: write-all
-  steps:
+    runs-on: windows-latest
+    permissions: write-all
+    steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
@@ -21,48 +21,48 @@ jobs:
         iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
         refreshenv
     
-    - name: Install SFML dependencies (Windows)
+    - name: Install build tools
       run: |
-        choco install -y cmake
-        choco install -y vcredist2019  # Для Visual C++ Redistributable
+        choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+        choco install -y vcredist2019
     
-    - name: Download and extract SFML
+    - name: Download SFML
       run: |
         $url = "https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-64-bit.zip"
         Invoke-WebRequest -Uri $url -OutFile sfml.zip
-        Expand-Archive -Path sfml.zip -DestinationPath C:/SFML-2.5.1
-        echo "SFML_ROOT=C:/SFML-2.5.1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Expand-Archive -Path sfml.zip -DestinationPath C:/SFML
+        echo "SFML_ROOT=C:/SFML" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
     
-    - name: Configure CMake (Windows)
+    - name: Configure CMake
       run: |
         cmake . `
           -DPATCH_VERSION=${{ github.run_number }} `
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install `
-          -DSFML_ROOT="C:/SFML-2.5.1" `
+          -DSFML_ROOT="C:/SFML" `
           -A x64
     
-    - name: Build and Install (Windows)
+    - name: Build project
       run: cmake --build . --config Release --target install
     
-    - name: Create ZIP package (Windows)
+    - name: Create package
       run: cpack -G ZIP
     
-    - name: Run Tests (Windows)
+    - name: Run tests
       run: ctest -C Release --output-on-failure || exit 1
     
-    - name: Create Release (Windows)
+    - name: Create Windows Release
       id: create_release_windows
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.run_number }}
-        release_name: Release ${{ github.run_number }} (Windows)
+        tag_name: win-${{ github.run_number }}
+        release_name: Windows Release ${{ github.run_number }}
         draft: false
         prerelease: false
     
-    - name: Upload Release Asset (Windows)
-      id: upload-release-asset-windows
+    - name: Upload Windows Asset
+      id: upload-windows-asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,32 +76,43 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-      - run: sudo apt-get install libsfml-dev    
-      - run: cmake . -DPATCH_VERSION=${{ github.run_number }}
-      - run: cmake --build .
-      - run: cmake --build . --target package
-      - name: List files (ubuntu)
-        run: ls
-      - name: Create Release (ubuntu)
-        id: create_release_ubuntu
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ubuntu${{ github.run_number }}
-          release_name: Release ${{ github.run_number }} (ubuntu)
-          draft: false
-          prerelease: false 
-      - name: Upload Release Asset (ubuntu)
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release_ubuntu.outputs.upload_url }}
-          asset_path: ./physics-0.0.${{ github.run_number }}-Linux.zip
-          asset_name: physics-0.0.${{ github.run_number }}-Linux.zip
-          asset_content_type: application/zip
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y libsfml-dev cmake
+    
+    - name: Configure CMake
+      run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DCMAKE_INSTALL_PREFIX=$(pwd)/install
+    
+    - name: Build project
+      run: cmake --build . --target install
+    
+    - name: Create package
+      run: cpack -G ZIP
+    
+    - name: Run tests
+      run: ctest --output-on-failure || exit 1
+    
+    - name: Create Ubuntu Release
+      id: create_release_ubuntu
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ubuntu-${{ github.run_number }}
+        release_name: Ubuntu Release ${{ github.run_number }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Ubuntu Asset
+      id: upload-ubuntu-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release_ubuntu.outputs.upload_url }}
+        asset_path: ./physics-0.0.${{ github.run_number }}-Linux.zip
+        asset_name: physics-0.0.${{ github.run_number }}-Linux.zip
+        asset_content_type: application/zip
