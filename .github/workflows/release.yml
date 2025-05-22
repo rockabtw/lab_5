@@ -7,19 +7,39 @@ on:
 
 jobs:
   build_windows:
-    runs-on: windows-latest
-    permissions: write-all
-    steps:
+  runs-on: windows-latest
+  permissions: write-all
+  steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
     
-    - name: Install SFML (Windows)
+    - name: Install Chocolatey
       run: |
-        choco install sfml --version=2.5.1 -y
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+        refreshenv
+    
+    - name: Install SFML dependencies (Windows)
+      run: |
+        choco install -y cmake
+        choco install -y vcredist2019  # Для Visual C++ Redistributable
+    
+    - name: Download and extract SFML
+      run: |
+        $url = "https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-64-bit.zip"
+        Invoke-WebRequest -Uri $url -OutFile sfml.zip
+        Expand-Archive -Path sfml.zip -DestinationPath C:/SFML-2.5.1
+        echo "SFML_ROOT=C:/SFML-2.5.1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
     
     - name: Configure CMake (Windows)
-      run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install -DSFML_ROOT="C:/Program Files (x86)/SFML"
+      run: |
+        cmake . `
+          -DPATCH_VERSION=${{ github.run_number }} `
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install `
+          -DSFML_ROOT="C:/SFML-2.5.1" `
+          -A x64
     
     - name: Build and Install (Windows)
       run: cmake --build . --config Release --target install
@@ -28,7 +48,7 @@ jobs:
       run: cpack -G ZIP
     
     - name: Run Tests (Windows)
-      run: ctest --output-on-failure || exit 1
+      run: ctest -C Release --output-on-failure || exit 1
     
     - name: Create Release (Windows)
       id: create_release_windows
