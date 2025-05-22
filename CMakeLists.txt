@@ -60,8 +60,16 @@ target_compile_options(physics PRIVATE
 # Установка
 install(TARGETS physics DESTINATION bin)
 
-# Настройка CPack
-set(CPACK_GENERATOR "ZIP;DEB")
-set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_NAME "physics")
+# Настройки для DEB-пакета
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name <your.email@example.com>")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsfml-dev (>= 2.6), libc6 (>= 2.28)")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/your/repo")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Physics simulation package")
+set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+
+# Общие настройки CPack
+set(CPACK_PACKAGE_VENDOR "Your Organization")
+set(CPACK_PACKAGE_CONTACT "Your Name <your.email@example.com>")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+
 include(CPack)
