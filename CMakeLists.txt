@@ -6,7 +6,7 @@ project(physics VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CPACK_PROJECT_NAME physics)
-# Пытаемся найти предустановленный SFML
+# Пытаемся найти предустановленный SFML/
 find_package(SFML COMPONENTS graphics)
 
 
