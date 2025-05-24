@@ -6,6 +6,11 @@ project(physics VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CPACK_PROJECT_NAME physics)
+<<<<<<< HEAD
+=======
+# Пытаемся найти предустановленный SFML/
+find_package(SFML COMPONENTS graphics)
+>>>>>>> edcd883aeebdff16e9e3b8e0980e0a5c6e01fae9
 
 # =============================================
 # Указываем CMake, где искать SFML в MSYS2
@@ -24,7 +29,7 @@ else()
     include(FetchContent)
     FetchContent_Declare(SFML
             GIT_REPOSITORY https://github.com/SFML/SFML.git
-            GIT_TAG 2.6.1)
+            GIT_TAG 2.6.x)
     set(SFML_BUILD_AUDIO OFF CACHE BOOL "" FORCE)
     set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
