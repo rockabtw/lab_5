@@ -6,15 +6,20 @@ project(physics VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CPACK_PROJECT_NAME physics)
-# Пытаемся найти предустановленный SFML
-find_package(SFML COMPONENTS graphics)
 
+# =============================================
+# Указываем CMake, где искать SFML в MSYS2
+set(SFML_DIR "C:/msys64/mingw64/lib/cmake/SFML")  # Путь для MSYS2
+# =============================================
+
+# Пытаемся найти предустановленный SFML
+find_package(SFML COMPONENTS graphics system window REQUIRED)  # Добавлены system и window
 
 # скачивание SFML
 if (SFML_FOUND)
     message(STATUS "The SFML installed in the system will be used")
-else ()
-# Если SFML не найден - выкачиваем и собираем из исходников
+else()
+    # Если SFML не найден - выкачиваем и собираем из исходников
     message(STATUS "Get SFML from the source code")
     include(FetchContent)
     FetchContent_Declare(SFML
@@ -23,16 +28,14 @@ else ()
     set(SFML_BUILD_AUDIO OFF CACHE BOOL "" FORCE)
     set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-    # Обход потенциальных проблем при сборке sfml-graphics
-    # (stb_image.h: 'argument': conversion from 'int' to 'short')
     set(WARNINGS_AS_ERRORS FALSE CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(SFML)
-endif ()
+endif()
 
 # для использования M_PI
 if (MSVC)
     add_definitions(-D_USE_MATH_DEFINES)
-endif ()
+endif()
 
 # добавление исполняемого файла
 add_executable(physics
@@ -40,11 +43,11 @@ add_executable(physics
         black_box/Application.cpp black_box/View.cpp black_box/PainterImpl.cpp)
 
 # связывание с SFML
-target_link_libraries(physics PRIVATE sfml-graphics)
+target_link_libraries(physics PRIVATE sfml-graphics sfml-system sfml-window)  # Добавлены sfml-system и sfml-window
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")  # Флаг для компилятора MSVC (Windows)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-else() # Флаг для g++ и clang++ (Linux, MacOS) 
+else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
 
